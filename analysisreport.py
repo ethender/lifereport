@@ -14,9 +14,10 @@ class AnalysisReport:
 
     def checkCurrenciesAmount(self,df, currencyLabel='currency', amountLabel='amount'):
         temp = {}
-        for currency in df[currencyLabel].unique():
-            amount = df[df[currencyLabel] == currency][amountLabel].sum()
-            temp[currency] = amount
+        if not df.empty:
+            for currency in df[currencyLabel].unique():
+                amount = df[df[currencyLabel] == currency][amountLabel].sum()
+                temp[currency] = amount
         return temp
 
     def getSummary(self):
@@ -31,7 +32,7 @@ class AnalysisReport:
 
     def getSummaryPlot(self,currency=None):
         summary = self.getSummary()
-        t = io.BytesIO
+        t = io.BytesIO()
         plt.figure(figsize=(10,10))
         if currency is None:
             data = summary.loc[:,self.defaultCurrency]
@@ -39,9 +40,12 @@ class AnalysisReport:
             data = summary.loc[:,currency]
         #return data
         plt.pie(data, labels=data.index, autopct='%1.1f%%')
-        #plt.title('Summary')
+        plt.title('Summary')
         plt.savefig(t, format='png')
         return base64.b64encode(t.getvalue()).decode("utf-8").replace("\n", "")
+
+
+
 
 
 

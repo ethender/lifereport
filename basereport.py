@@ -14,9 +14,15 @@ import matplotlib.pyplot as plt
 '''
 class BaseReport:
 
-    def __init__(self):
+    def __init__(self,startDate=None,endDate=None):
         self.url = 'http://aarambh.tech:3000/api/life'
-        (self.startDate,self.endDate) = self.getStartEndDateString()
+        if startDate is not None and endDate is not None:
+            self.startDate = startDate
+            self.endDate = endDate
+        else:
+            (self.startDate, self.endDate) = self.getStartEndDateString()
+        print("Start Date: "+self.startDate)
+        print("End Date: "+self.endDate)
         self.fetchedData = {}
         self.process()
 
@@ -34,32 +40,34 @@ class BaseReport:
 
     def dropLastModified(self):
         for key,value in self.fetchedData.items():
-            if 'lastmodified' in value.columns:
-                value.drop(columns=['lastmodified'],axis=1,inplace=True)
-            else:
-                value.drop(columns=['lastModified'], axis=1, inplace=True)
-            self.fetchedData[key] = value
+            if not value.empty:
+                if 'lastmodified' in value.columns:
+                    value.drop(columns=['lastmodified'],axis=1,inplace=True)
+                else:
+                    value.drop(columns=['lastModified'], axis=1, inplace=True)
+                self.fetchedData[key] = value
 
     def changeDateTypes(self):
         for key,value in self.fetchedData.items():
-            if key == 'credits':
-                value['cdate'] = pd.to_datetime(value['cdate']).dt.date
-                value.rename(columns={'cdate': 'date'}, inplace=True)
-            elif key  == 'expense':
-                value['mdate'] = pd.to_datetime(value['mdate']).dt.date
-                value.rename(columns={'mdate': 'date'}, inplace=True)
-            elif key == 'investment':
-                value['startdate'] = pd.to_datetime(value['startdate']).dt.date
-                value['enddate'] = pd.to_datetime(value['enddate']).dt.date
-            elif key == 'investmengained':
-                value['idate'] = pd.to_datetime(value['idate']).dt.date
-                value.rename(columns={'idate': 'date'}, inplace=True)
-            elif key == 'loanemi':
-                value['emidate'] = pd.to_datetime(value['emidate']).dt.date
-                value.rename(columns={'emidate': 'date'}, inplace=True)
-            else:
-                pass
-            self.fetchedData[key] = value
+            if not value.empty:
+                if key == 'credits':
+                    value['cdate'] = pd.to_datetime(value['cdate']).dt.date
+                    value.rename(columns={'cdate': 'date'}, inplace=True)
+                elif key  == 'expense':
+                    value['mdate'] = pd.to_datetime(value['mdate']).dt.date
+                    value.rename(columns={'mdate': 'date'}, inplace=True)
+                elif key == 'investment':
+                    value['startdate'] = pd.to_datetime(value['startdate']).dt.date
+                    value['enddate'] = pd.to_datetime(value['enddate']).dt.date
+                elif key == 'investmengained':
+                    value['idate'] = pd.to_datetime(value['idate']).dt.date
+                    value.rename(columns={'idate': 'date'}, inplace=True)
+                elif key == 'loanemi':
+                    value['emidate'] = pd.to_datetime(value['emidate']).dt.date
+                    value.rename(columns={'emidate': 'date'}, inplace=True)
+                else:
+                    pass
+                self.fetchedData[key] = value
 
     def fetchExpenses(self,params=None):
         req = self.fetchUrl(extendurl='/month/expense')
@@ -104,9 +112,7 @@ class BaseReport:
             return pd.DataFrame()
 
     def fetchUrl(self,extendurl,params=None):
-        if params is None:
-            startDate, endDate = self.getStartEndDateString()
-            params = {'from': startDate, 'to': endDate}
+        params = {'from': self.startDate, 'to': self.endDate}
         req = requests.get(self.url+extendurl, params=params)
         return req
 
@@ -169,5 +175,5 @@ class BaseReport:
 
 if __name__ == "__main__":
     print("***")
-    re = BaseReport()
+    re = BaseReport(startDate='2022-07-1',endDate='2022-07-30')
     print(re.__str__())
